@@ -52,19 +52,6 @@ The desire:
 
 ### 🧭 5. Trade-offs
 
-- DataBase
-  The database choice was considering the kind workload, data access patterns and database modeling.
-  - Workload: OLTP (online transactional processing): many short transactional operations, low latency, strong consistency.
-  - Data acess pattern: Write-heavy (many inserts/updates) PostgreSQL handles transactional writes well thanks to its strong ACID guarantees and mature indexing.
-  - Data Modeling: Relational (row-oriented) Best for normalized data, referential integrity, rich joins, strong transactions.
-
-## PostgreSQL and MySQL Comparison
-
-## Cloudflare and Amazon CloudFront Comparison
-
-## ALB and NLB and CLB and ELB comparison
-
-## BFF and API Gateway comparison
 
 Eu conversei com o Andrei e ele identificou que o diagrama e conceitos que eu estava tentando
 criar e desenvolver no diagrama de arquitetura não estavam coerentes com o que ele esperava.
