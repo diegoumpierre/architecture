@@ -15,3 +15,6 @@
 - Support to materialized views
 - Is OpenSource
 - Have frenquently updates
+
+## Why NOT Postgres
+- Create a new system process for each user connected to the database, alocating more memory (+- 10mb)
