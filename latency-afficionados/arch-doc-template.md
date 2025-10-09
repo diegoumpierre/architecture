@@ -52,15 +52,14 @@ The desire:
 
 ### 🧭 5. Trade-offs
 
-
-Eu conversei com o Andrei e ele identificou que o diagrama e conceitos que eu estava tentando
+<!-- Eu conversei com o Andrei e ele identificou que o diagrama e conceitos que eu estava tentando
 criar e desenvolver no diagrama de arquitetura não estavam coerentes com o que ele esperava.
 
 Eu tinha que ficar mais confiante em criar o diagrama e
 E entender todos os serviços que eu estava utilizando na arquitetura pois alguns deles eu nao conhecia e
 precisave entender melhor o funcionamento deles.
 E assim meus tradeoff estavam ficando sem sentido.
-Nao posso apresentar algo cheio de duvidas e incertezas
+Nao posso apresentar algo cheio de duvidas e incertezas -->
 
 ### 🌏 6. For each key major component
 
@@ -73,9 +72,106 @@ What is a majore component? A service, a lambda, a important ui, a generalized a
 6.4 - Algorithms/Data Structures : Spesific algos that need to be used, along size with spesific data structures.
 ```
 
-Exemplos of other components: Batch jobs, Events, 3rd Party Integrations, Streaming, ML Models, ChatBots, etc...
+### 6.2 Contract Documentation
 
-Recommended Reading: http://diego-pacheco.blogspot.com/2018/05/internal-system-design-forgotten.html
+### User
+
+```
+GET - /user/me
+
+{
+  "id": 0,
+  "fullName": "string",
+  "email": "string",
+  "password": "string",
+  "createdAt": "2025-10-09T16:05:28.155Z",
+  "updatedAt": "2025-10-09T16:05:28.155Z",
+  "enabled": true,
+  "accountNonExpired": true,
+  "credentialsNonExpired": true,
+  "accountNonLocked": true,
+  "authorities": [
+    {
+      "authority": "string"
+    }
+  ],
+  "username": "string"
+}
+```
+
+```
+GET - /users/
+
+[
+  {
+    "id": 0,
+    "fullName": "string",
+    "email": "string",
+    "password": "string",
+    "createdAt": "2025-10-09T16:06:58.156Z",
+    "updatedAt": "2025-10-09T16:06:58.156Z",
+    "enabled": true,
+    "accountNonExpired": true,
+    "credentialsNonExpired": true,
+    "accountNonLocked": true,
+    "authorities": [
+      {
+        "authority": "string"
+      }
+    ],
+    "username": "string"
+  }
+]
+```
+
+### Authentication
+
+```
+POST - /auth/signup
+
+-> Input:
+{
+  "email": "string",
+  "password": "string",
+  "fullName": "string"
+}
+
+-> Response:
+{
+  "id": 0,
+  "fullName": "string",
+  "email": "string",
+  "password": "string",
+  "createdAt": "2025-10-09T16:08:43.719Z",
+  "updatedAt": "2025-10-09T16:08:43.719Z",
+  "enabled": true,
+  "accountNonExpired": true,
+  "credentialsNonExpired": true,
+  "accountNonLocked": true,
+  "authorities": [
+    {
+      "authority": "string"
+    }
+  ],
+  "username": "string"
+}
+```
+
+```
+POST - /auth/login
+
+-> Input:
+{
+  "email": "string",
+  "password": "string"
+}
+
+-> Response:
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkaWVnb0B1bXBpZXJyZS5jb20uYnIiLCJpYXQiOjE3NjAwMjYyMjMsImV4cCI6MTc2MDAyOTgyM30.7FyTJWMON-Q24MgJuaMwZY9qeUCelNlDoweDKxNuUdI",
+  "expiresIn": 3600000
+}
+```
 
 ### 🖹 7. Migrations
 
@@ -83,7 +179,10 @@ IF Migrations are required describe the migrations strategy with proper diagrams
 
 ### 🖹 8. Testing strategy
 
-Explain the techniques, principles, types of tests and will be performaned, and spesific details how to mock data, stress test it, spesific chaos goals and assumptions.
+- Unit Test - Junit 5
+- Integration test - Junit 5
+- Chaos Test - Chaos Toolkit, Chaos Monkey for Spring Bott, K6
+- Stress Test - K6
 
 ### 🖹 9. Observability strategy
 
