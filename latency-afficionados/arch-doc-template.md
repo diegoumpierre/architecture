@@ -83,8 +83,27 @@ IF Migrations are required describe the migrations strategy with proper diagrams
 
 ### 🖹 8. Testing strategy
 
-Explain the techniques, principles, types of tests and will be performaned, and spesific details how to mock data, stress test it, spesific chaos goals and assumptions.
-
+Techniques & Principles
+Test Pyramid: Unit, Integration, E2E tests.
+Shift-left testing: Start testing early in development.
+Automation: Use CI/CD for running tests.
+Types of Tests
+Unit Tests: Test individual functions/classes (e.g., with JUnit, Mockito).
+Integration Tests: Test interactions between components/services.
+End-to-End (E2E) Tests: Simulate user flows (e.g., Selenium).
+Stress Tests: Simulate high load (e.g., JMeter).
+Chaos Tests: Introduce failures to test resilience (e.g., Chaos Toolkit).
+Mocking Data
+Use Mockito to mock service/database responses.
+Create fake data objects for tests.
+Use in-memory databases (e.g., H2) for integration tests.
+Stress Testing
+Use JMeter to simulate thousands of concurrent users.
+Measure response times, throughput, error rates.
+Chaos Goals & Assumptions
+Goal: Ensure system recovers from database outages.
+Assumption: Services are stateless and can restart without data loss.
+Example: Use Chaos Toolkit to randomly kill service pods and verify auto-recovery.
 ### 🖹 9. Observability strategy
 
 Explain the techniques, principles,types of observability that will be used, key metrics, what would be logged and how to design proper dashboards and alerts.
