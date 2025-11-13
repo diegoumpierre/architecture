@@ -176,15 +176,32 @@ IF Migrations are required describe the migrations strategy with proper diagrams
 
 ### 🖹 8. Testing strategy
 
-- Unit and Integration Test - Predominant because they provide fast feedback and often have a low cost to develop and maintain.
-- Contract Tests - Tells if any changes in a service will break the consumers.
-- Stress Test - To check the system can handle some peak volumes. Check the concurrency and resource utilization.
-- Chaos Test - Add some hypothesis about failures in the system and check if the system can recover from it.
-- UI tests  - To check the main user flows are working as expected.
+- Unit and Integration Test
+  Predominant because they provide fast feedback and often have a low cost to develop and maintain.
+  - All the classes need a unit test
+  - All the branch's in the class need be cover
+  - The acceptable cover for the project is 90%.
+- Contract Tests
+  Tells if any changes in a service will break the consumers.
+  - All the interfaces need a contract test.
+  - All the methods need be cover.
+  - Need at leasst one implementation for ecah method from the interface.
+- Stress Test
+  To check the system can handle some peak volumes. Check the concurrency and resource utilization.
+  - Need a scenario to handle peak of 100k RPS
+- Chaos Test
+  Add some hypothesis about failures in the system and check if the system can recover from it.
+  - Need a scenario where disconnect the database
+- UI tests
+  To check the main user flows are working as expected.
+  - All the classes need a unit test
+  - All the branch's in the class need be cover
+  - The acceptable cover for the project is 90%.
 
 ### 🖹 9. Observability strategy
 
 The idea is to instrument the code and publish customer metrics, the metrics will be colleted are:
+
 - Success and failures: Count all successful and fail operations.
 - Latency percentiles: Measure the latency of operations and publish p50, p70, p75, p90, p95 and p99 percentiles.
 - Top used queries: Most frequent run queries.
@@ -197,14 +214,14 @@ For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3,
 ### 🖹 11. Technology Stack
 
 - Test
- - Junit 5
- - Chaos Toolkit
- - Chaos Monkey for Spring Bott
- - K6
+- Junit 5
+- Chaos Toolkit
+- Chaos Monkey for Spring Bott
+- K6
 
 - Observability
- - Prometheus
- - Grafana
+- Prometheus
+- Grafana
 
 Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
 
