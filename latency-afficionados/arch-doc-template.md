@@ -352,7 +352,6 @@ WHERE p.enabled = TRUE
 ORDER BY p.created_at DESC
 LIMIT :limit OFFSET :offset;
 `
-
  
 - Get Product Recommendations
 - `SELECT
@@ -396,6 +395,7 @@ FROM carts c
 WHERE c.user_id = :user_id
     AND c.status = 'ACTIVE';
 `
+
 - Get Cart Items by Cart ID
 - `SELECT
     ci.id,
