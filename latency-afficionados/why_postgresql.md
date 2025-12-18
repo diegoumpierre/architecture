@@ -5,16 +5,16 @@
 
 # Module
 - ACID property:
--- Atomicity: Everthing happens or nothing happens
+-- Atomicity: Everything happens or nothing happens
 -- Consistency: No invalid state
--- Isolation: One transaction do not afect the another one
+-- Isolation: One transaction do not affect the another one
 -- Durability: No data loss after the transaction is committed
 
 ## Why Postgres
 - Always ACID compliant.
 - Support to materialized views
 - Is OpenSource
-- Have frenquently updates
+- Have frequently updates
 
 ## Why NOT Postgres
 - Create a new system process for each user connected to the database, alocating more memory (+- 10mb)

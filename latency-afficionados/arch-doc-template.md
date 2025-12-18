@@ -25,11 +25,11 @@ The desire:
 
 - Update the React 19 (the last stable version)
 - Decomposite the monolith using microservice
-- Migrate to java 21 (the last LTS)
+- Migrate to java 25 (the last LTS)
 - ADD coverage tests (Using mockito, unit tests and integration tests and Jacooco/Cobertura)
 - ADD stress test (JMeter to simulate multiple access)
 - ADD caos tests (Chaos Toolkit to simulate problems)
-- Postgresql 17 (the last LTS)
+- Postgresql 18 (the last LTS)
 
 ### 3. 🎯 Non-Goals
 
@@ -209,21 +209,257 @@ The idea is to instrument the code and publish customer metrics, the metrics wil
 
 ### 🖹 10. Data Store Designs
 
-For each different kind of data store i.e (Postgres, Memcached, Elasticache, S3, Neo4J etc...) describe the schemas, what would be stored there and why, main queries, expectations on performance. Diagrams are welcome but you really need some dictionaries.
+10.1 - Database Schemas
+
+## Table: `users`- Postgres
+Store user details including authentication and account status.
+
+| Column                  | Type         | Constraints                                                     |
+| ----------------------- | ------------ | --------------------------------------------------------------- |
+| id                      | BIGINT       | PRIMARY KEY, AUTO_INCREMENT                                     |
+| full_name               | VARCHAR(255) | NOT NULL                                                        |
+| username                | VARCHAR(150) | NOT NULL, UNIQUE                                                |
+| email                   | VARCHAR(255) | NOT NULL, UNIQUE                                                |
+| enabled                 | BOOLEAN      | NOT NULL, DEFAULT TRUE                                          |
+| account_non_expired     | BOOLEAN      | NOT NULL, DEFAULT TRUE                                          |
+| credentials_non_expired | BOOLEAN      | NOT NULL, DEFAULT TRUE                                          |
+| account_non_locked      | BOOLEAN      | NOT NULL, DEFAULT TRUE                                          |
+| created_at              | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP                             |
+| updated_at              | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
+
+## Table: `authorities`- Postgres
+Store roles/authorities assigned to users.
+
+| Column    | Type         | Constraints                 |
+| --------- | ------------ | --------------------------- |
+| id        | BIGINT       | PRIMARY KEY, AUTO_INCREMENT |
+| authority | VARCHAR(100) | NOT NULL, UNIQUE            |
+
+
+## Table: `user_authorities`- Postgres
+Stores the many-to-many relationship between users and their authorities.
+
+| Column       | Type   | Constraints                                                        |
+| ------------ | ------ | ------------------------------------------------------------------ |
+| user_id      | BIGINT | NOT NULL, FOREIGN KEY REFERENCES users(id) ON DELETE CASCADE       |
+| authority_id | BIGINT | NOT NULL, FOREIGN KEY REFERENCES authorities(id) ON DELETE CASCADE |
+|              |        | PRIMARY KEY (user_id, authority_id)                                |
+
+## Table: `products` - Postgres
+Store product details.
+
+| Column      | Type          | Constraints                                                     |
+| ----------- | ------------- | --------------------------------------------------------------- |
+| id          | BIGINT        | PRIMARY KEY, AUTO_INCREMENT                                     |
+| name        | VARCHAR(255)  | NOT NULL                                                        |
+| description | TEXT          | NULL                                                            |
+| price       | DECIMAL(10,2) | NOT NULL, CHECK (price >= 0)                                    |
+| quantity    | INT           | NOT NULL, DEFAULT 0                                             |
+| enabled     | BOOLEAN       | NOT NULL, DEFAULT TRUE                                          |
+| created_at  | TIMESTAMP     | NOT NULL, DEFAULT CURRENT_TIMESTAMP                             |
+| updated_at  | TIMESTAMP     | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
+
+## Table: `product_recommendations` - Postgres
+Store product recommendation details.
+
+| Column                 | Type         | Constraints                                                     |
+|------------------------| ------------ | --------------------------------------------------------------- |
+| id                     | BIGINT       | PRIMARY KEY, AUTO_INCREMENT                                     |
+| product_id             | BIGINT       | NOT NULL, FOREIGN KEY REFERENCES products(id) ON DELETE CASCADE |
+| recommended_product_id | BIGINT       | NOT NULL, FOREIGN KEY REFERENCES products(id) ON DELETE CASCADE |
+| score                  | DECIMAL(5,4) | NOT NULL, CHECK (score >= 0 AND score <= 1)                     |
+| observation            | VARCHAR(255) | NULL                                                            |
+| created_at             | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP                             |
+
+## Table: `marketplaces` - Postgres
+Store marketplace details.
+
+| Column        | Type         | Constraints                                                     |
+| ------------- | ------------ | --------------------------------------------------------------- |
+| id            | BIGINT       | PRIMARY KEY, AUTO_INCREMENT                                     |
+| name          | VARCHAR(255) | NOT NULL, UNIQUE                                                |
+| description   | TEXT         | NULL                                                            |
+| owner_user_id | BIGINT       | NOT NULL, FOREIGN KEY REFERENCES users(id) ON DELETE CASCADE    |
+| enabled       | BOOLEAN      | NOT NULL, DEFAULT TRUE                                          |
+| created_at    | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP                             |
+| updated_at    | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
+
+## Table: `marketplace_products` - Postgres
+Store products listed in marketplaces with specific pricing and stock.
+
+| Column         | Type          | Constraints                                                         |
+| -------------- | ------------- | ------------------------------------------------------------------- |
+| marketplace_id | BIGINT        | NOT NULL, FOREIGN KEY REFERENCES marketplaces(id) ON DELETE CASCADE |
+| product_id     | BIGINT        | NOT NULL, FOREIGN KEY REFERENCES products(id) ON DELETE CASCADE     |
+| price          | DECIMAL(10,2) | NOT NULL, CHECK (price >= 0)                                        |
+| stock          | INT           | NOT NULL, DEFAULT 0                                                 |
+| enabled        | BOOLEAN       | NOT NULL, DEFAULT TRUE                                              |
+| created_at     | TIMESTAMP     | NOT NULL, DEFAULT CURRENT_TIMESTAMP                                 |
+| updated_at     | TIMESTAMP     | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP     |
+|                |               | PRIMARY KEY (marketplace_id, product_id)                            |
+
+## Table: `carts`
+Store shopping cart details.
+
+| Column         | Type        | Constraints                                                      |
+| -------------- | ----------- | ---------------------------------------------------------------- |
+| id             | BIGINT      | PRIMARY KEY, AUTO_INCREMENT                                      |
+| user_id        | BIGINT      | NOT NULL, FOREIGN KEY REFERENCES users(id) ON DELETE CASCADE     |
+| marketplace_id | BIGINT      | NULL, FOREIGN KEY REFERENCES marketplaces(id) ON DELETE SET NULL |
+| status         | VARCHAR(30) | NOT NULL, DEFAULT 'ACTIVE'                                       |
+| created_at     | TIMESTAMP   | NOT NULL, DEFAULT CURRENT_TIMESTAMP                              |
+| updated_at     | TIMESTAMP   | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  |
+
+## Table: `cart_items`
+Store items added to shopping carts.
+
+| Column         | Type          | Constraints                                                     |
+| -------------- | ------------- | --------------------------------------------------------------- |
+| id             | BIGINT        | PRIMARY KEY, AUTO_INCREMENT                                     |
+| cart_id        | BIGINT        | NOT NULL, FOREIGN KEY REFERENCES carts(id) ON DELETE CASCADE    |
+| marketplace_id | BIGINT        | NOT NULL                                                        |
+| product_id     | BIGINT        | NOT NULL                                                        |
+| quantity       | INT           | NOT NULL, DEFAULT 1, CHECK (quantity > 0)                       |
+| unit_price     | DECIMAL(10,2) | NOT NULL, CHECK (unit_price >= 0)                               |
+| created_at     | TIMESTAMP     | NOT NULL, DEFAULT CURRENT_TIMESTAMP                             |
+| updated_at     | TIMESTAMP     | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
+
+10.2 - Main Queries
+- Get User by ID and authorities
+- `SELECT
+    u.id,
+    u.full_name,
+    u.username,
+    u.email,
+    u.enabled,
+    a.authority
+FROM users u
+LEFT JOIN user_authorities ua ON ua.user_id = u.id
+LEFT JOIN authorities a ON a.id = ua.authority_id
+WHERE u.id = :user_id;
+`
+
+- List Products with Pagination
+- `SELECT
+    p.id,
+    p.name,
+    p.description,
+    p.price,
+    p.quantity,
+    p.enabled
+FROM products p
+WHERE p.enabled = TRUE
+ORDER BY p.created_at DESC
+LIMIT :limit OFFSET :offset;
+`
+
+ 
+- Get Product Recommendations
+- `SELECT
+    pr.recommended_product_id,
+    p.name,
+    p.description,
+    p.price,
+    pr.score,
+    pr.observation
+FROM product_recommendations pr
+JOIN products p ON p.id = pr.recommended_product_id
+WHERE pr.product_id = :product_id
+ORDER BY pr.score DESC
+LIMIT :limit;
+`
+
+- Get Marketplace Products
+  - `SELECT
+      mp.product_id,
+      p.name,
+      p.description,
+      mp.price,
+      mp.stock
+  FROM marketplace_products mp
+  JOIN products p ON p.id = mp.product_id
+  WHERE mp.marketplace_id = :marketplace_id
+      AND mp.enabled = TRUE
+  ORDER BY p.name ASC
+      LIMIT :limit OFFSET :offset;
+  `
+  
+- Get Cart by User ID
+- `SELECT
+    c.id,
+    c.user_id,
+    c.marketplace_id,
+    c.status,
+    c.created_at,
+    c.updated_at
+FROM carts c
+WHERE c.user_id = :user_id
+    AND c.status = 'ACTIVE';
+`
+- Get Cart Items by Cart ID
+- `SELECT
+    ci.id,
+    ci.product_id,
+    ci.quantity,
+    ci.unit_price,
+    ci.created_at,
+    ci.updated_at
+FROM cart_items ci
+WHERE ci.cart_id = :cart_id;
+`
 
 ### 🖹 11. Technology Stack
 
-- Test
-- Junit 5
-- Chaos Toolkit
-- Chaos Monkey for Spring Bott
-- K6
+## Frontend
+- React 19
+ - New features like concurrent rendering and automatic batching
+- Testing: Jest + React Testing Library + Playwright
+  - Unit, integration, E2E and visual regression testing
 
-- Observability
-- Prometheus
-- Grafana
+## Backend
+- Language: Java 25
+  - Modern language features
+  - Performance 
+- Framework: Spring Boot 4.0
+  - Multiple API built-in features
+  - Large community and ecosystem
+- Testing: 
+  - JUnit 6 + Mockito
+    - Unit and integration testing
+  - Chaos Toolkit
+    - Open-source chaos engineering framework
+    - Integrates with Spring Boot applications
+    - Chaos experiments defined in YAML
+  - Chaos Monkey for Spring Boot
+    - Open-source library
+    - Simulate latency, exceptions, and application restarts
+    - Easy integration with Spring Boot applications
+  - K6
+    - Open-source load testing tool
+    - Scriptable in JavaScript
+    - Integrates with CI/CD pipelines
 
-Describe your stack, what databases would be used, what servers, what kind of components, mobile/ui approach, general architecture components, frameworks and libs to be used or not be used and why.
+## Databases
+- PostgresSQL 18
+  - One database for each microservice
+  - ACID property:
+    - Atomicity: Everything happens or nothing happens
+    - Consistency: No invalid state
+    - Isolation: One transaction do not affect the another one
+    - Durability: No data loss after the transaction is committed
+
+
+## Storage
+- Amazon S3
+  - Product image storage
+  - CloudFront CDN for image delivery
+  - Presigned URLs for secure uploads
+
+## Observability
+- Splunk (Log aggregation)
+- Prometheus (Metrics collection)
+- Grafana (Metrics visualization)
+
 
 ### 🖹 12. References
 
