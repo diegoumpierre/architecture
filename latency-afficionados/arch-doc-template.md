@@ -417,9 +417,9 @@ WHERE ci.cart_id = :cart_id;
   - Unit, integration, E2E and visual regression testing
 
 ## Backend
-- Language: Java 25
+- Language: Java 25 (LTS)
   - Modern language features
-  - Performance 
+  - Strong performance under high concurrency. 
 - Framework: Spring Boot 4.0
   - Multiple API built-in features
   - Large community and ecosystem
