@@ -17,7 +17,7 @@ The desire:
   - Smallest latencies possible.
   - Render fast they can.
   - Migrate from Java 1.4 which needs to be migrated to Java
-21.
+25.
   - Propose a decomposition of the monolith.
 ```
 
@@ -38,7 +38,11 @@ The desire:
 
 ### 📐 3. Principles
 
-- SSR - Server-Side Rendering (SSR) is when the HTML of a web page is generated on the server and sent fully rendered to the browser, instead of being built dynamically with JavaScript on the client.
+1. Testability: Ensuring the application continues to work correctly (unit test, integration and visual regressions tests).
+2. Efficient Rendering: Optimizing how your application displays content using island-architecture.
+3. Code Splitting: Single Responsibility Principle - each module has one clear purpose.
+4. Observability: Time to Interactive, User session time and User retention.
+5. Cache Efficiency: CDN caching: Distribute content geographically closer to users.
 
 ### 🏗️ 4. Overall Diagrams
 
@@ -180,7 +184,7 @@ IF Migrations are required describe the migrations strategy with proper diagrams
   Predominant because they provide fast feedback and often have a low cost to develop and maintain.
   - All the classes need a unit test
   - All the branch's in the class need be cover
-  - The acceptable cover for the project is 90%.
+  - The acceptable cover for the project is 100%.
 - Contract Tests
   Tells if any changes in a service will break the consumers.
   - All the interfaces need a contract test.
