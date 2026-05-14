@@ -52,6 +52,8 @@ The desire:
 
 ### 🗂️ 4.2 Deployment: Show the infra in a big picture.
 
+![alt text](deployment-diagram.png)
+
 ### 🗂️ 4.3 Use Cases: Make 1 macro use case diagram that list the main capability that needs to be covered.
 
 ### 🧭 5. Trade-offs
@@ -204,18 +206,32 @@ IF Migrations are required describe the migrations strategy with proper diagrams
 
 ### 🖹 9. Observability strategy
 
-The idea is to instrument the code and publish customer metrics, the metrics will be colleted are:
+The strategy is AWS-native
 
-- Success and failures: Count all successful and fail operations.
-- Latency percentiles: Measure the latency of operations and publish p50, p70, p75, p90, p95 and p99 percentiles.
-- Top used queries: Most frequent run queries.
-- Execution time: Transactions, query or process execution time.
+#### 9.1 Tooling
+
+| Pillar        | Tool                                     | What it covers in our architecture                             |
+| ------------- | ---------------------------------------- | -------------------------------------------------------------- |
+| Logs          | CloudWatch Logs                          | Centralized application and access logs                        |
+| Metrics       | CloudWatch Metrics + Container Insights  | Infrastructure, ECS task/service/cluster metrics               |
+| Traces        | X-Ray (OpenTelemetry SDK in Spring Boot) | End-to-end distributed tracing with correlation ID per request |
+| Dashboards    | Grafana                                  | Unified operational and business visualization                 |
+| Alerts        | CloudWatch Alarms → SNS                  | Threshold-based alerts routed to on-call teams                 |
+| Audit (infra) | CloudTrail → S3                          | Immutable audit trail with long-term retention                 |
+
+#### 9.2 Key Metrics and Alerts
+
+- Success and failures: count of successful and failed operations per endpoint.
+- Latency percentiles: p50, p75, p90, p95, p99 per endpoint.
+- Top queries: most frequent SQL / DynamoDB queries with execution count and avg duration.
+- Execution time: transaction, query and process duration histograms.
 
 ### 🖹 10. Data Store Designs
 
 10.1 - Database Schemas
 
 ## Table: `users`- Postgres
+
 Store user details including authentication and account status.
 
 | Column                  | Type         | Constraints                                                     |
@@ -232,6 +248,7 @@ Store user details including authentication and account status.
 | updated_at              | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
 
 ## Table: `authorities`- Postgres
+
 Store roles/authorities assigned to users.
 
 | Column    | Type         | Constraints                 |
@@ -239,8 +256,8 @@ Store roles/authorities assigned to users.
 | id        | BIGINT       | PRIMARY KEY, AUTO_INCREMENT |
 | authority | VARCHAR(100) | NOT NULL, UNIQUE            |
 
-
 ## Table: `user_authorities`- Postgres
+
 Stores the many-to-many relationship between users and their authorities.
 
 | Column       | Type   | Constraints                                                        |
@@ -250,6 +267,7 @@ Stores the many-to-many relationship between users and their authorities.
 |              |        | PRIMARY KEY (user_id, authority_id)                                |
 
 ## Table: `products` - Postgres
+
 Store product details.
 
 | Column      | Type          | Constraints                                                     |
@@ -264,10 +282,11 @@ Store product details.
 | updated_at  | TIMESTAMP     | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
 
 ## Table: `product_recommendations` - Postgres
+
 Store product recommendation details.
 
 | Column                 | Type         | Constraints                                                     |
-|------------------------| ------------ | --------------------------------------------------------------- |
+| ---------------------- | ------------ | --------------------------------------------------------------- |
 | id                     | BIGINT       | PRIMARY KEY, AUTO_INCREMENT                                     |
 | product_id             | BIGINT       | NOT NULL, FOREIGN KEY REFERENCES products(id) ON DELETE CASCADE |
 | recommended_product_id | BIGINT       | NOT NULL, FOREIGN KEY REFERENCES products(id) ON DELETE CASCADE |
@@ -276,6 +295,7 @@ Store product recommendation details.
 | created_at             | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP                             |
 
 ## Table: `marketplaces` - Postgres
+
 Store marketplace details.
 
 | Column        | Type         | Constraints                                                     |
@@ -289,6 +309,7 @@ Store marketplace details.
 | updated_at    | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
 
 ## Table: `marketplace_products` - Postgres
+
 Store products listed in marketplaces with specific pricing and stock.
 
 | Column         | Type          | Constraints                                                         |
@@ -303,6 +324,7 @@ Store products listed in marketplaces with specific pricing and stock.
 |                |               | PRIMARY KEY (marketplace_id, product_id)                            |
 
 ## Table: `carts`
+
 Store shopping cart details.
 
 | Column         | Type        | Constraints                                                      |
@@ -315,6 +337,7 @@ Store shopping cart details.
 | updated_at     | TIMESTAMP   | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP  |
 
 ## Table: `cart_items`
+
 Store items added to shopping carts.
 
 | Column         | Type          | Constraints                                                     |
@@ -329,6 +352,7 @@ Store items added to shopping carts.
 | updated_at     | TIMESTAMP     | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP |
 
 10.2 - Main Queries
+
 - Get User by ID and authorities
 - `SELECT
     u.id,
@@ -356,7 +380,7 @@ WHERE p.enabled = TRUE
 ORDER BY p.created_at DESC
 LIMIT :limit OFFSET :offset;
 `
- 
+
 - Get Product Recommendations
 - `SELECT
     pr.recommended_product_id,
@@ -374,19 +398,18 @@ LIMIT :limit;
 
 - Get Marketplace Products
   - `SELECT
-      mp.product_id,
-      p.name,
-      p.description,
-      mp.price,
-      mp.stock
-  FROM marketplace_products mp
-  JOIN products p ON p.id = mp.product_id
-  WHERE mp.marketplace_id = :marketplace_id
-      AND mp.enabled = TRUE
-  ORDER BY p.name ASC
-      LIMIT :limit OFFSET :offset;
-  `
-  
+    mp.product_id,
+    p.name,
+    p.description,
+    mp.price,
+    mp.stock
+FROM marketplace_products mp
+JOIN products p ON p.id = mp.product_id
+WHERE mp.marketplace_id = :marketplace_id
+    AND mp.enabled = TRUE
+ORDER BY p.name ASC
+    LIMIT :limit OFFSET :offset;
+`
 - Get Cart by User ID
 - `SELECT
     c.id,
@@ -415,19 +438,21 @@ WHERE ci.cart_id = :cart_id;
 ### 🖹 11. Technology Stack
 
 ## Frontend
+
 - React 19
- - New features like concurrent rendering and automatic batching
+- New features like concurrent rendering and automatic batching
 - Testing: Jest + React Testing Library + Playwright
   - Unit, integration, E2E and visual regression testing
 
 ## Backend
+
 - Language: Java 25 (LTS)
   - Modern language features
-  - Strong performance under high concurrency. 
+  - Strong performance under high concurrency.
 - Framework: Spring Boot 4.0
   - Multiple API built-in features
   - Large community and ecosystem
-- Testing: 
+- Testing:
   - JUnit 6 + Mockito
     - Unit and integration testing
   - Chaos Toolkit
@@ -444,6 +469,7 @@ WHERE ci.cart_id = :cart_id;
     - Integrates with CI/CD pipelines
 
 ## Databases
+
 - PostgresSQL 18
   - One database for each microservice
   - ACID property:
@@ -452,18 +478,23 @@ WHERE ci.cart_id = :cart_id;
     - Isolation: One transaction do not affect the another one
     - Durability: No data loss after the transaction is committed
 
-
 ## Storage
+
 - Amazon S3
   - Product image storage
   - CloudFront CDN for image delivery
   - Presigned URLs for secure uploads
 
 ## Observability
-- Splunk (Log aggregation)
-- Prometheus (Metrics collection)
-- Grafana (Metrics visualization)
 
+AWS-native, to match the ECS / RDS / DynamoDB / API Gateway stack and avoid running a parallel logging or metrics platform. Detailed in Section 9.
+
+- CloudWatch Logs — application logs (4 ECS services) and access logs (3 ALBs + API Gateway)
+- CloudWatch Metrics + Container Insights — infrastructure and custom RED metrics
+- AWS X-Ray (OpenTelemetry SDK) — distributed tracing with W3C `traceparent` propagation
+- Amazon Managed Grafana — unified dashboards (per-service, SRE, business)
+- CloudWatch Alarms → SNS → PagerDuty — SLO burn-rate alerting
+- CloudTrail → S3 (Object Lock) — immutable infra audit trail
 
 ### 🖹 12. References
 
